@@ -5,6 +5,8 @@ THIS LIBRARY WAS CHANGED TO WORK ON A TEENSY LC
 The main changes include the incorporation of the i2c_t3-library for the Teensy instead
 of the normal Wire-library of the Aduino.
 
+You can find the link to the original library here: https://github.com/jayjayuk/Si7021-Humidity-And-Temperature-Sensor-Library/tree/9521ae7ef849b9017fb04cb13febfd81a281b414
+
 This library was made for the Si7021 Humidity and Temperature sensor and only tested
 on the teensy 3.1 but it should work for Arduino also. The Si7021 is an I2C device
 that runs on 3.3v, it has four pins broken out, two for power and two for I2C so
