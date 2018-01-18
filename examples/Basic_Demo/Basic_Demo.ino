@@ -1,5 +1,5 @@
 //#include <Wire.h>
-#include <Si7021.h>
+#include <Si7021_teensy.h>
 
 SI7021 si7021;
 
