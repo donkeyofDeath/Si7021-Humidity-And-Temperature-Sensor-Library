@@ -1,4 +1,4 @@
-#include <Wire.h>
+//#include <Wire.h>
 #include <Si7021.h>
 
 SI7021 si7021;
