@@ -130,5 +130,7 @@ Serial.println("Finished.");
 
 void loop()
 {
+  float temperature = si7021.readTemp();
+  Serial.println(temperature);
 }
 
