@@ -14,6 +14,8 @@ class SI7021
 			float readHumidity();
 			float readTemp();
 			float readTempPrev();
+			float tempCalc(uint16_t bytes);
+			float rhCalc(uint16_t bytes);
 
 			/* Resolution Functions */
 			void setHumidityRes(uint8_t res);
@@ -40,9 +42,19 @@ class SI7021
 			float FtoC(float tempF);
 
 		private:
+			static const uint16_t GENERATOR_POLYNOM=0x131;
+			static const uint8_t NUMBER_OF_ELEMENTS=2;
+			static const uint8_t SI7021_ADDR=0x40;
+			static const uint32_t DEFAULT_COMMUNICATION_SPEED=400000;
+			uint8_t checkSum;
+			uint8_t receivedBytes[]={};
+			uint8_t crctable[256]={};
+
 			void writeRegister(uint8_t reg, uint8_t value);
 			uint8_t readRegister(uint8_t reg);
 			uint16_t readSensor(uint8_t reg);
+			void calulateTableCRC8(uint8_t *crctable);
+			uint8_t computeCRC8(uint8_t *bytes);
 };
 
 #endif

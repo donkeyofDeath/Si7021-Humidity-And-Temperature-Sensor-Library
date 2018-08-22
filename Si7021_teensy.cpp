@@ -1,19 +1,12 @@
 #include "Si7021_teensy.h"
 
-
-#define RH_CALC(n)		(((125 * (float) (n)) / 65536) - 6)
-#define TEMP_CALC(n)	(((175.72f * (n)) / 65536) - 46.85f)
-
-#define SI7021_ADDR		0x40
-
-#define DEFAULT_COMMUNICATION_SPEED 400000
-
 SI7021::SI7021()
 {
 }
 
 void SI7021::begin(uint32_t communicationSpeed)
 {
+	calulateTableCRC8(crctable);
 	Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, communicationSpeed);											// Begin I2C
 	Wire.resetBus();
 	reset();											// Reset sensor
@@ -21,25 +14,32 @@ void SI7021::begin(uint32_t communicationSpeed)
 
 void SI7021::begin()
 {
+	calulateTableCRC8(crctable);
 	Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, DEFAULT_COMMUNICATION_SPEED);											// Begin I2C
 	Wire.resetBus();
 	reset();											// Reset sensor
 }
 
+float SI7021::rhCalc(uint16_t bytes){
+	return(((125 * (float) (bytes)) / 65536) - 6);
+}		
+float SI7021::tempCalc(uint16_t bytes){
+	return(((175.72f * (bytes)) / 65536) - 46.85f);
+}
 
 float SI7021::readHumidity()
 {
-    return RH_CALC(readSensor(0xE5)); 						// Return humidity
+    return rhCalc(readSensor(0xE5)); 						// Return humidity
 }
 
 float SI7021::readTemp()
 {
-	return TEMP_CALC(readSensor(0xE3));						// Return temp
+	return tempCalc(readSensor(0xE3));						// Return temp
 }
 
 float SI7021::readTempPrev()
 {
-	return TEMP_CALC(readSensor(0xE0));						// Return previous temp
+	return tempCalc(readSensor(0xE0));						// Return previous temp
 }
 
 void SI7021::setHumidityRes(uint8_t res)
@@ -205,14 +205,72 @@ uint8_t SI7021::readRegister(uint8_t reg)
 }
 
 uint16_t SI7021::readSensor(uint8_t reg)
+{	
+	if(reg==0xE0){
+		uint16_t var = 0;
+	    Wire.beginTransmission(SI7021_ADDR);
+	    Wire.write(reg);
+	    Wire.endTransmission(false);
+	    Wire.requestFrom(SI7021_ADDR, 2);
+	    var = Wire.read();
+	    var = var<<8 | Wire.read();
+	    return var;
+	}
+	else{
+	    uint16_t var = 0;
+	    Wire.beginTransmission(SI7021_ADDR);
+	    Wire.write(reg);
+	    Wire.endTransmission(false);
+	    Wire.requestFrom(SI7021_ADDR, 3);
+	    receivedBytes[0] = Wire.read();
+	    receivedBytes[1] = Wire.read();
+	    checkSum=Wire.read();
+	    if(computeCRC8(receivedBytes)==checkSum){
+	    	var=receivedBytes[0]<<8 | receivedBytes[1];	
+	    } 
+	    else{
+	    	var=0; //Return a zero if an error occured
+	    }
+	    //Serial.println(var);
+	    return var;
+	}
+}
+
+
+
+void SI7021::calulateTableCRC8(uint8_t *crctable)
 {
-    uint16_t var = 0;
-    Wire.beginTransmission(SI7021_ADDR);		//was addded by me to see if it works when I add the delay.
-    Wire.write(reg);		//was addded by me to see if it works when I add the delay.
-    Wire.endTransmission(false);		//was addded by me to see if it works when I add the delay.
-    Wire.requestFrom(SI7021_ADDR, 2);		//was addded by me to see if it works when I add the delay.
-    var = Wire.read() << 8;		//was addded by me to see if it works when I add the delay.
-    var |= Wire.read() & 0x0FF;		//was addded by me to see if it works when I add the delay.
-    //Serial.println(var);
-    return var;
+    /* iterate over all byte values 0 - 255 */
+    for (uint16_t divident = 0; divident < 256; divident++)
+    {
+        uint8_t currByte = divident;
+        /* calculate the CRC-8 value for current byte */
+        for (uint8_t bit = 0; bit < 8; bit++)
+        {
+            if ((currByte & 0x80) != 0)
+            {
+                currByte <<= 1;
+                currByte ^= GENERATOR_POLYNOM;
+            }
+            else
+            {
+                currByte <<= 1;
+            }
+        }
+        /* store CRC value in lookup table */
+        crctable[divident] = currByte;
+    }
+}
+
+uint8_t SI7021::computeCRC8(uint8_t *bytes)
+{
+    uint8_t crc = 0;
+    for(uint16_t k=0;k < NUMBER_OF_ELEMENTS;k++)
+    {
+        /* XOR-in next input byte */
+        uint8_t data = (uint8_t)(receivedBytes[k] ^ crc);
+        /* get current CRC value = remainder */
+        crc = (uint8_t)(crctable[data]);
+    }
+    return crc;
 }
