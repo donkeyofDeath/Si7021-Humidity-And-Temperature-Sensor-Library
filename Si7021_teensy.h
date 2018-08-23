@@ -11,8 +11,8 @@ class SI7021
 			/* Main Functions */
 			void begin();
 			void begin(uint32_t communicationSpeed);
-			float readHumidity();
-			float readTemp();
+			uint8_t readHumidity(float* humidityValue);
+			uint8_t readTemp(float* temperatureValue);
 			float readTempPrev();
 			float tempCalc(uint16_t sensorValue);
 			float rhCalc(uint16_t sensorValue);
@@ -46,7 +46,6 @@ class SI7021
 			static const uint8_t NUMBER_OF_ELEMENTS=2;
 			static const uint8_t SI7021_ADDR=0x40;
 			static const uint32_t DEFAULT_COMMUNICATION_SPEED=400000;
-			const float ERROR_CODE=255.0;
 			
 			bool communicationSuccessFlag=true;
 			uint8_t checkSum;

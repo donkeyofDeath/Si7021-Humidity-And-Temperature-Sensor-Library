@@ -28,22 +28,23 @@ float SI7021::tempCalc(uint16_t sensorValue){
 	return (((175.72f * (sensorValue)) / 65536) - 46.85f);
 }
 
-float SI7021::readHumidity(){
+uint8_t SI7021::readHumidity(float* humidityValue){
     if(communicationSuccessFlag){
-    	return rhCalc(readSensor(0xE5)); 						// Return humidity
+    	*humidityValue = rhCalc(readSensor(0xE5));
+    	return 0; 						// Return humidity
     }
     else{
-    	return ERROR_CODE;
+    	return 1;
     }
 }
 
-float SI7021::readTemp()
-{
+uint8_t SI7021::readTemp(float* temperatureValue){
 	if(communicationSuccessFlag){
-		return tempCalc(readSensor(0xE3));						// Return temp
+		*temperatureValue = tempCalc(readSensor(0xE3));
+		return 0;						// Return temp
 	}
 	else{
-		return ERROR_CODE;
+		return 1;
 	}
 }
 
